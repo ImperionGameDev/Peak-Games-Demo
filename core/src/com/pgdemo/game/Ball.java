@@ -5,18 +5,20 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Ball {
-	Texture img;
-	float positionX, positionY;
-	float horizontalSpeed;
-	float verticalSpeed;
-	Rectangle rect;
-	int level;
-	float radius;
+	Texture img;												//Topun resmi
+	float positionX, positionY;									//Ýki boyutlu düzlendeki konumu
+	float horizontalSpeed;										//Yatay hýzý
+	float verticalSpeed;										//Dikey hýzý
+	Rectangle rect;												//Çarpýþma durumlarý için kullanýlan dikdörtgensel alan
+	int level;													//Topun seviyesi - Eðer seviye 0 a gelene kadar bütün toplar ikiye bölünerek seviyeleri birer azalýr
+	float radius;												//Topun yarýçapý
 	
 	private final float DEFAULT_RADIUS = 15.0f;
 	private final float DEFAULT_HORIZONTAL_SPEED = 50.0f;
 	private final float GRAVITY = 40.0f;
 	
+	
+	//Constructors
 	Ball(){
 		positionX = positionY = 0;
 		horizontalSpeed = DEFAULT_HORIZONTAL_SPEED;
@@ -57,12 +59,14 @@ public class Ball {
 		rect=new Rectangle(positionX, positionY, 2 * radius, 2 * radius);
 	}
 
+	//Topun konumunun deðiþtirilmesi
 	public void SetPositions(float x, float y){
 		positionX = x;
 		positionY = y;
 		rect=new Rectangle(positionX, positionY, 2 * radius, 2 * radius);
 	}
 	
+	//Topun zamana göre hareketinin saðlanmasý
 	public void BallMovement(float deltaTime, int width){
 		positionX += deltaTime * horizontalSpeed;
 		positionY += deltaTime * verticalSpeed;
