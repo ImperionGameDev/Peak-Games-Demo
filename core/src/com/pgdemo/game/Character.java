@@ -4,10 +4,10 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Character {
-	Texture img;											//Ana karakterin resmi
-	float positionX, positionY;								//2 boyutlu düzlemde konumu
-	Rectangle rect;											//Çarpýþma durumu için kullanýlan dikdörtgensel alan
-	float walkingTime = 0.0f;								//Animasyondaki durum için kullanýlan yürüme zamaný
+	public Texture img;											
+	public float positionX, positionY;								
+	public Rectangle rect;											//Çarpýþma durumu için kullanýlan dikdörtgensel alan
+	public float walkingTime = 0.0f;								//Animasyondaki durum için kullanýlan yürüme zamaný
 	
 	//Constructors
 	Character(){
@@ -37,7 +37,7 @@ public class Character {
 	//Yürüme iþlemlerinin çalýþtýðý yer
 	public void MoveHorizontal(float distance, float width){
 		positionX += distance;
-		if(positionX < 0)									//Pencereden çýkmamasýnýn saðlanmasý
+		if(positionX < 0)									
 			positionX = 0;
 		
 		if(positionX > width - img.getWidth())

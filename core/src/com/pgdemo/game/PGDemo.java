@@ -5,10 +5,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Buttons;
 import com.badlogic.gdx.Input.Keys;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
@@ -19,37 +22,47 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.pgdemo.game.Quest.Type;
+import com.sun.xml.internal.messaging.saaj.packaging.mime.util.QEncoderStream;
 
 public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	
-	SpriteBatch batch;
-	Character mainCharacter;							//Ana karakter
-	List<Ball> balls;									//Oyundaki toplar
-	Wall wall;											//Ana karakterin ateþ ederek oluþturduðu duvar
-	OrthographicCamera camera;							
-	Rectangle glViewport;			
-	BitmapFont font;
-	Texture ballTexture;								//Oyundaki toplarýn dokusu
-	Texture characterTexture;							//Ana karakterin dokusu
-	Texture wallTexture;								//Duvar dokusu
-	Texture lifeTexture;								//Can bilgisi için doku
-	Texture leftAnimTexture;							//Sol tarafa yürüme animasyonu için doku atlasý
+	private Random rand = new Random();
 	
-	Animation charLeftAnim;								//Sol tarafa yürüme animasyonu
+	private boolean gameStarted = false;
 	
-	boolean pause = false;								//Oyunun durmasý
-	String finishStr;									//Oyun durduðunda ekranda gözükecek bilgi
+	private SpriteBatch batch;
+	private Character mainCharacter;							
+	private List<Ball> balls;									
+	private Wall wall;											
+	private OrthographicCamera camera;							
+	private Rectangle glViewport;			
+	private BitmapFont font;
+	private Texture ballTexture;								
+	private Texture characterTexture;							
+	private Texture wallTexture;								
+	private Texture lifeTexture;								
+	private Texture leftAnimTexture;							//Sol tarafa yürüme animasyonu için doku atlasý
+	private Texture menuBackground;
 	
-	int score = 0;										//Skor bilgisi
-	int lifes = 3;										//Can sayýsý
+	private Animation charLeftAnim;								//Sol tarafa yürüme animasyonu
 	
-	int movementSpeed = 120;							//Ana karakterin yürüme hýzý
+	private boolean pause = false;								
+	private String finishStr;									
 	
-	boolean leftMoving = false;							//Ana karakterin sol ve sað tarafa yüürme bilgileri
-	boolean rightMoving = false;
+	private int score = 0;										
+	private int lifes = 3;										
 	
-	int WIDTH = 800;								//Ekranýn geniþliði ve yüksekliði
-	int HEIGHT = 480;
+	private int movementSpeed = 120;							//Ana karakterin yürüme hýzý
+	
+	private boolean leftMoving = false;							//Ana karakterin sol ve sað tarafa yürüme bilgileri
+	private boolean rightMoving = false;
+	
+	private int WIDTH = 800;									
+	private int HEIGHT = 480;
+	
+	private float lastPressed = 0.0f;
 	
 	class TouchInfo{									//Mobil için dokunma sýnýfý
 		public float touchX = 0.0f;
@@ -58,15 +71,23 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	}
 	
 	private Map<Integer, TouchInfo> touches = new HashMap<Integer, TouchInfo>();									//Dokunma bilgilerini tutacak harita
+	private int[] mousePosition = new int[2];
+	private boolean mousePressed = false;
+	
+	private List<Quest> quests = new ArrayList<Quest>();
+	private Quest currentQuest;
+	
+	private List<Integer> highscores = new ArrayList<Integer>();
 	
 	@Override
 	public void create () {
 		
-		ballTexture = new Texture(Gdx.files.internal("ball.png"));													//Dokularýn alýndýðý bölüm
+		ballTexture = new Texture(Gdx.files.internal("ball.png"));													
 		characterTexture = new Texture(Gdx.files.internal("character.png"));
 		wallTexture = new Texture(Gdx.files.internal("wall.png"));
 		lifeTexture = new Texture(Gdx.files.internal("life.png"));
 		leftAnimTexture = new Texture(Gdx.files.internal("leftAnim.png"));
+		menuBackground = new Texture(Gdx.files.internal("backgroundmenu.png"));
 		
 		TextureRegion[] leftRegions = new TextureRegion[18]; 														//Yürüme animasyonu için 
 		for(int i = 0; i < 3; i++){																					//doku atlasýndan dokularýn çekilmesi
@@ -78,7 +99,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		charLeftAnim = new Animation(0.1f, leftRegions);															//Yürüme animasyonunun oluþturulmasý		
 		
 		batch = new SpriteBatch();
-		mainCharacter=new Character(characterTexture);																//Ana karakterin oluþturulmasý
+		//mainCharacter=new Character(characterTexture);																
 		
 		WIDTH = Gdx.graphics.getWidth();
 		HEIGHT = Gdx.graphics.getHeight();
@@ -89,16 +110,22 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	    glViewport = new Rectangle(0, 0, WIDTH, HEIGHT);
 	    
 	    balls = new ArrayList<Ball>();
-	    balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));														//Ýlk seviye topun oluþturulmasý
+	    //balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));														
 	    
 	    font = new BitmapFont();
 	    font.setColor(Color.BLUE);
 	    font.setScale(2);
 	    
 	    Gdx.input.setInputProcessor(this);																		
-	    for(int i = 0; i < 2; i++){																					//Ýki dokunmayý haritaya ata
+	    for(int i = 0; i < 2; i++){																					
 	    	touches.put(i, new TouchInfo());	
 	    }
+	    
+	    quests.add(new Quest("Destroy 2 ball in 30 secs.", Quest.Type.BALL_DESTROY, 2, 30));
+	    quests.add(new Quest("Do not die in 10 secs.", Quest.Type.DONT_DIE, 10));
+	    quests.add(new Quest("Score 200 points in 7 secs.", Quest.Type.SCORE, 200, 7));
+	    quests.add(new Quest("Destroy 3 balls with 3 walls.", Quest.Type.BALL_DESTROY_EFFICIENT, 3, 3));
+	    quests.add(new Quest("Make highscore.", Quest.Type.HIGHSCORE));
 	    
 	}
 
@@ -111,7 +138,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		
 		//camera.update();
 		
-		if(!pause){																									//Oyun durarken çalýþmasýný istemediðimiz fonksiyonlar
+		if(!pause && gameStarted){																					//Oyun durarken çalýþmasýný istemediðimiz fonksiyonlar
 			keyboard();																								//Klavyeden gelen bilgilerin iþleneceði fonksiyon
 			touch();																								//Mobil için dokunma iþlemlerinin yapýlacaðý fonksiyon
 			update();																								//Her frame çalýþmasý istenen fonksiyonlar
@@ -119,25 +146,71 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		}
 		
 		batch.begin();
-		drawCharacter(mainCharacter);																				//Ana karakterin çizilmesi
-		for(int i = 0; i < balls.size(); i++){																		//Toplarýn çizilmesi
-			drawBall(balls.get(i));
-		}
-		if(wall != null)
-			drawWall(wall);																							//Duvar oluþturulmuþsa çizilmesi
-		font.draw(batch, Integer.toString(score), WIDTH - 50, HEIGHT - 30);											//Skor bilgisinin gösterilmesi
 		
-		for(int i = 0; i < lifes; i++){																				//Can bilgisinin gösterilmesi
-			batch.draw(lifeTexture, 10 + 20 * i, + HEIGHT - 30);
+		drawBackground();
+		
+		if(!gameStarted){
+			font.draw(batch, "PLAY", WIDTH / 6, HEIGHT / 2);
+			font.draw(batch, "EXIT", WIDTH / 6, HEIGHT / 2 - 30);
+			for(int i=0; i<highscores.size(); i++){
+				font.draw(batch, (i+1)+". "+highscores.get(i), WIDTH * 5 / 6 , HEIGHT - 200 - i * 30);
+				if(i==5)
+					break;
+			}
+			menuMouse();
+			menuTouch();
 		}
 		
-		if(pause)																									//Oyun durduðunda gösterilmesi istenilen yazý
-			font.draw(batch, finishStr, WIDTH / 2 - 60, HEIGHT / 2);
+		if(gameStarted){
+			drawCharacter(mainCharacter);																				
+			for(int i = 0; i < balls.size(); i++){																		
+				drawBall(balls.get(i));
+			}
+			if(wall != null)
+				drawWall(wall);																							
+			font.draw(batch, Integer.toString(score), WIDTH - 100, HEIGHT - 30);											
+			
+			for(int i = 0; i < lifes; i++){																				
+				batch.draw(lifeTexture, 10 + 20 * i, + HEIGHT - 30);
+			}
+			
+			showQuest();
+			
+			if(pause)																									
+				font.draw(batch, finishStr, WIDTH / 2 - 60, HEIGHT / 2);
+		}
+		
 		
 		batch.end();
 	}
 	
 	private void update(){
+		int hs = 0;
+		if(highscores.size()>0)
+			hs=highscores.get(0);
+		if(currentQuest.getType() == Quest.Type.HIGHSCORE){
+			if(score > hs){
+				score += 250;
+				currentQuest.refresh();
+				currentQuest = quests.get(rand.nextInt(quests.size()));
+			}
+		}
+		
+		if(currentQuest.progress(Gdx.graphics.getDeltaTime())){
+			score += 250;
+			currentQuest.refresh();
+			currentQuest = quests.get(rand.nextInt(quests.size()));
+		}
+		else{
+			if(!currentQuest.enoughTime()){
+				currentQuest.refresh();
+				currentQuest = quests.get(rand.nextInt(quests.size()));
+			}
+			if(!currentQuest.enoughWall()){
+				currentQuest.refresh();
+				currentQuest = quests.get(rand.nextInt(quests.size()));
+			}
+		}
 		
 		for(int i = 0; i < balls.size(); i++){
 			balls.get(i).BallMovement(Gdx.graphics.getDeltaTime(), WIDTH);											//Her bir topun kare baþýna hareketinin saðlanmasý
@@ -157,23 +230,36 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 					balls.remove(i);																				//O top ve duvar yok olacak
 					wall = null;
 					
-					score += (temp.level + 1) * 100;																//Skor topun seviyesine göre artacak
+					if(currentQuest.getType()==Quest.Type.BALL_DESTROY){
+						currentQuest.ballDestroyed();
+					}
+					if(currentQuest.getType() == Quest.Type.SCORE){
+						currentQuest.addScore((temp.getLevel() + 1) * 100);
+					}
+					if(currentQuest.getType() == Quest.Type.BALL_DESTROY_EFFICIENT){
+						currentQuest.ballDestroyed();
+					}					
 					
-					if(temp.level>0){																				//Seviyeye göre yarýçapýn ve seviyenin yarýsý kadar 2 yeni top oluþturulacak
-						balls.add(new Ball(ballTexture, temp.positionX - 10, temp.positionY, temp.radius/2, -(temp.horizontalSpeed * 2 / 3), temp.level - 1));
-						balls.add(new Ball(ballTexture, temp.positionX + 10, temp.positionY, temp.radius/2, (temp.horizontalSpeed * 2 / 3), temp.level - 1));
+					score += (temp.getLevel() + 1) * 100;																//Skor topun seviyesine göre artacak
+					
+					if(temp.getLevel()>0){																				//Seviyeye göre yarýçapýn ve seviyenin yarýsý kadar 2 yeni top oluþturulacak
+						balls.add(new Ball(ballTexture, temp.positionX - 10, temp.positionY, temp.getRadius()/2, temp.horizontalSpeed<0 ? (temp.horizontalSpeed * 2 / 3) : -(temp.horizontalSpeed * 2 / 3), temp.getLevel() - 1));
+						balls.add(new Ball(ballTexture, temp.positionX + 10, temp.positionY, temp.getRadius()/2, temp.horizontalSpeed>0 ? (temp.horizontalSpeed * 2 / 3) : -(temp.horizontalSpeed * 2 / 3), temp.getLevel() - 1));
 					}
 				}
 			}		
 		}
 		
+		
 		if(wall != null){
-			if(wall.height<HEIGHT)
+			if(wall.getHeight()<HEIGHT)
 				wall.Grow(Gdx.graphics.getDeltaTime());																//Duvarýn frame baþýna yükselmesi
 			else{
 				wall=null;
 			}
 		}
+		
+		lastPressed += Gdx.graphics.getDeltaTime();
 		
 	}
 	
@@ -195,8 +281,37 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 			rightMoving = false;
 		}
 		if(Gdx.input.isKeyPressed(Keys.SPACE)){																		//Space tuþuna basýlýrsa ateþ etme iþlemi yapýlacak
-			wall = new Wall(wallTexture, mainCharacter.positionX, mainCharacter.positionY);							
+			if(lastPressed >= 0.2f){
+				wall = new Wall(wallTexture, mainCharacter.positionX, mainCharacter.positionY);
+				if(currentQuest.getType() == Quest.Type.BALL_DESTROY_EFFICIENT)
+					currentQuest.wallUsed();
+				lastPressed = 0.0f;
+			}
 		}
+	}
+	
+	private void menuMouse(){
+		if(Gdx.input.isButtonPressed(Input.Buttons.LEFT)){
+			mousePressed = true;
+			mousePosition[0] = Gdx.input.getX();
+			mousePosition[1] = Gdx.input.getY();
+		}
+		else{
+			mousePressed = false;
+		}
+		if(mousePressed){
+			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 && mousePosition[1] < HEIGHT / 2 + 30 ){
+				startGame();
+			}
+			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 + 30 && mousePosition[1] < HEIGHT / 2 + 60 ){
+				Gdx.app.exit();
+			}
+		}
+		
+	}
+	
+	private void menuTouch(){
+		
 	}
 	
 	//Ana karakterin animasyon ve çiziminin yapýldýðý fonksiyon
@@ -219,36 +334,101 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	
 	//Topun çiziminin yapýlacaðý fonksiyon
 	private void drawBall(Ball b){
-		batch.draw(b.img, b.positionX, b.positionY, b.radius * 2, b.radius * 2);									//Topun yarýçapýna baðlý olarak deðiþen çizim
+		batch.draw(b.img, b.positionX, b.positionY, b.getRadius() * 2, b.getRadius() * 2);									
 	}
 	
 	//Duvarýn çiziminin yapýlacaðý fonksiyon
 	private void drawWall(Wall w){
-		batch.draw(w.img, w.positionX, w.positionY, w.img.getWidth(), w.height);									//Duvarýn yüksekliðine göre deðiþen çizim
+		batch.draw(w.img, w.positionX, w.positionY, w.img.getWidth(), w.getHeight());									
+	}
+	
+	private void drawBackground(){
+		if(gameStarted){
+			//batch.draw(region, x, y, originX, originY, width, height, scaleX, scaleY, rotation)
+		}
+		else{
+			batch.draw(menuBackground, 0, 0, WIDTH, HEIGHT);
+		}
+	}
+	
+	private void startGame(){
+		mainCharacter = new Character(characterTexture);
+		balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));
+		currentQuest = quests.get(4);
+		gameStarted = true;
+		score=0;
+		lifes=3;
 	}
 	
 	//Topun ana karaktere çarpmasý sonucunda çalýþacak fonksiyon
 	private void restart(){	
-		lifes--;																									//Can sayýsý bir aza iner
+		lifes--;																									
+		if(currentQuest.getType() == Quest.Type.DONT_DIE){
+			currentQuest.refresh();
+			currentQuest = quests.get(rand.nextInt(quests.size()));
+		}
+		mainCharacter = new Character(characterTexture);															
 		
-		mainCharacter = new Character(characterTexture);															//Ana karakter yeniden oluþturulur
-		
-		balls = new ArrayList<Ball>();																				//Top dizisi sýfýrlanýr ve yeni top oluþturulur
-	    balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));		
+		balls = new ArrayList<Ball>();																				
+	    //balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));		
 	}
 	
 	//Oyunun bitiþini için oluþturulan fonksiyon
 	private void finish(){																			
-		finishStr = "Game Over";
-		pause = true;
+		//finishStr = "Game Over";
+		//pause = true;
+		gameStarted=false;
+		mainCharacter=null;
+		for(int i=highscores.size()-1; i>=0; i--){
+			if(score < highscores.get(i)){
+				highscores.add(i, score);
+				break;
+			}
+			if(i==0){
+				highscores.add(0, score);
+			}
+		}
+		if(highscores.size()==0)
+			highscores.add(score);
+		balls.clear();
 	}
 	
 	//Oyunun kazanma durumuna bakan fonksiyon
 	private void checkWin(){
+		System.out.println(balls.size());
 		if(balls.size()==0){
-			finishStr = "You Won";
-			pause = true;
+			int l = rand.nextInt(5);
+			balls.add(new Ball(ballTexture, rand.nextInt(WIDTH), rand.nextInt(HEIGHT / 3) + HEIGHT / 2, l * 15, rand.nextInt(150) - 75, l));
 		}
+	}
+	
+	private void showQuest(){
+		font.setScale(1);
+		String progressString = "";
+		
+		if(currentQuest.getType() == Quest.Type.BALL_DESTROY){
+			progressString = currentQuest.getCurrentBall()+" balls "+(int)currentQuest.getCurrentTime()+"secs.";
+		}
+		else if(currentQuest.getType() == Quest.Type.DONT_DIE){
+			progressString = (int)currentQuest.getCurrentTime()+"secs";
+		}
+		else if(currentQuest.getType() == Quest.Type.SCORE){
+			progressString = currentQuest.getCurrentScore()+" points "+(int)currentQuest.getCurrentTime()+"secs.";
+		}
+		else if(currentQuest.getType() == Quest.Type.BALL_DESTROY_EFFICIENT){
+			progressString = currentQuest.getCurrentBall()+" balls "+currentQuest.getCurrentWall()+" walls.";
+		}
+		else{
+			progressString = "Highscore is ";
+			if(highscores.size()>0){
+				progressString += highscores.get(0);
+			}
+			else
+				progressString += "0";
+		}
+		
+		font.draw(batch, currentQuest.getInfo() + " :: " + progressString, 0, HEIGHT - 100);
+		font.setScale(2);
 	}
 	
 	
@@ -264,7 +444,12 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 					leftMoving = false;
 				}
 				if(touches.get(i).touchX < WIDTH * 2 / 3 && touches.get(i).touchX >= WIDTH / 3){										//Orta pencerede olma durumu - Ateþ etme
-					wall = new Wall(wallTexture, mainCharacter.positionX, mainCharacter.positionY);	
+					if(lastPressed > 0.2f){
+						wall = new Wall(wallTexture, mainCharacter.positionX, mainCharacter.positionY);
+						if(currentQuest.getType() == Quest.Type.BALL_DESTROY_EFFICIENT)
+							currentQuest.wallUsed();
+						lastPressed = 0.0f;
+					}
 				}
 				if(touches.get(i).touchX < WIDTH && touches.get(i).touchX >= WIDTH * 2 / 3){											//Sað pencerede olma durumu - Saða yürüme
 					mainCharacter.MoveHorizontal(movementSpeed * Gdx.graphics.getDeltaTime(), WIDTH);
@@ -281,7 +466,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	 @Override
 	 public boolean touchDown(int screenX, int screenY, int pointer, int button){ 
 		 if(pointer < 2){
-			 touches.get(pointer).touchX = screenX;							//Ýki dokunmaya kadar konumu sýnýfa ata
+			 touches.get(pointer).touchX = screenX;							
 			 touches.get(pointer).touchY = screenY;
 			 touches.get(pointer).touched = true;
 		 }
@@ -292,7 +477,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	 @Override
 	 public boolean touchUp(int screenX, int screenY, int pointer, int button){
 		 if(pointer < 2){
-			 touches.get(pointer).touchX = 0;								//Ýki dokunmaya kadar bütün sýnýfý sýfýrla
+			 touches.get(pointer).touchX = 0;								
 			 touches.get(pointer).touchY = 0;
 			 touches.get(pointer).touched = false;
 		 }

@@ -4,11 +4,11 @@ import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.math.Rectangle;
 
 public class Wall {
-	Texture img;								//Duvarýn resmi
-	float positionX, positionY;					//2 boyutlu düzlemde konumu
-	float height;								//Yükseklik
-	Rectangle rect;								//Çarpýþma durumlarý için dikdörtgensel bölge
-	float speed;								//Duvarýn yükselme hýzý
+	public Texture img;								
+	public float positionX, positionY;					
+	private float height;								
+	public Rectangle rect;								//Çarpýþma durumlarý için dikdörtgensel bölge
+	private float speed;								//Duvarýn yükselme hýzý
 	
 	private final float DEFAULT_SPEED = 200.0f;	
 	
@@ -26,6 +26,10 @@ public class Wall {
 	public void Grow(float deltaTime){
 		height += deltaTime * speed;
 		rect=new Rectangle(positionX, positionY, img.getWidth(), height);
+	}
+	
+	public float getHeight(){
+		return height;
 	}
 
 }
