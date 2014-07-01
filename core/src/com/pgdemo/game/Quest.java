@@ -4,12 +4,19 @@ import com.badlogic.gdx.Gdx;
 
 class Quest {
 	
-	private String info;
+	private String info;											
 	private int ball, currentBall;
 	private float time, currentTime;
 	private int score, currentScore;
 	private int wall, currentWall;
 	
+	
+	//Görev tipleri:
+	//BALL_DESTROY: Belli bir zaman icinde belli bir miktarda topların yok edilmesi
+	//DONT_DIE: Belli bir zaman icinde karakterin can kaybının olmaması
+	//SCORE: Belli bir zaman icinde belli bir skor kazanma
+	//BALL_DESTROY_EFFICIENT: Belli bir sayıda duvar kullanarak belli bir sayıda topların yok edilmesi
+	//HIGHSCORE: En yuksek skorun yapilmasi	
 	public enum Type{BALL_DESTROY, DONT_DIE, SCORE, BALL_DESTROY_EFFICIENT, HIGHSCORE};
 	
 	private Type questType;
@@ -109,6 +116,7 @@ class Quest {
 		currentWall++;
 	}
 	
+	//Görev zamanının geçip geçmemesinin kontrolu
 	public boolean enoughTime(){
 		if(questType == Quest.Type.HIGHSCORE || questType == Quest.Type.BALL_DESTROY_EFFICIENT){
 			return true;
@@ -121,6 +129,7 @@ class Quest {
 		}
 	}
 	
+	//Belirtilen sayidan fazla duvarin kullanilmamasi
 	public boolean enoughWall(){
 		if(questType == Quest.Type.BALL_DESTROY_EFFICIENT){
 			if(currentWall>wall){
@@ -131,6 +140,7 @@ class Quest {
 		return true;
 	}
 	
+	//Görevlerin her karede isleyisi
 	public boolean progress(float deltaTime){
 		boolean result = false;
 		
@@ -156,6 +166,7 @@ class Quest {
 		return result;
 	}
 	
+	//Gorev fonksiyonlari
 	private boolean questBallDestroy(){
 		if(currentTime>time){
 			return false;

@@ -62,9 +62,9 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	private int WIDTH = 800;									
 	private int HEIGHT = 480;
 	
-	private float lastPressed = 0.0f;
+	private float lastPressed = 0.0f;							//Ateþ etme tuþunun art arda olmamasý için zaman tutma
 	
-	class TouchInfo{									//Mobil için dokunma sýnýfý
+	class TouchInfo{											//Mobil için dokunma sýnýfý
 		public float touchX = 0.0f;
 		public float touchY = 0.0f;
 		public boolean touched = false;
@@ -149,7 +149,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		
 		drawBackground();
 		
-		if(!gameStarted){
+		if(!gameStarted){																							//Oyunun menudeki çalýþacak fonksiyonlarý
 			font.draw(batch, "PLAY", WIDTH / 6, HEIGHT / 2);
 			font.draw(batch, "EXIT", WIDTH / 6, HEIGHT / 2 - 30);
 			for(int i=0; i<highscores.size(); i++){
@@ -188,7 +188,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		int hs = 0;
 		if(highscores.size()>0)
 			hs=highscores.get(0);
-		if(currentQuest.getType() == Quest.Type.HIGHSCORE){
+		if(currentQuest.getType() == Quest.Type.HIGHSCORE){														//Yüksek skor görevi tamamlanmýþ mý?
 			if(score > hs){
 				score += 250;
 				currentQuest.refresh();
@@ -196,17 +196,17 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 			}
 		}
 		
-		if(currentQuest.progress(Gdx.graphics.getDeltaTime())){
+		if(currentQuest.progress(Gdx.graphics.getDeltaTime())){													//Görev tamamlanmýþ mý?
 			score += 250;
 			currentQuest.refresh();
 			currentQuest = quests.get(rand.nextInt(quests.size()));
 		}
-		else{
-			if(!currentQuest.enoughTime()){
+		else{																									
+			if(!currentQuest.enoughTime()){																		//Zaman hakký geçmiþ mi?
 				currentQuest.refresh();
 				currentQuest = quests.get(rand.nextInt(quests.size()));
 			}
-			if(!currentQuest.enoughWall()){
+			if(!currentQuest.enoughWall()){																		//Duvar kullanma hakký geçmiþ mi?
 				currentQuest.refresh();
 				currentQuest = quests.get(rand.nextInt(quests.size()));
 			}
@@ -290,6 +290,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		}
 	}
 	
+	//Menudeki mouse hareketi
 	private void menuMouse(){
 		if(Gdx.input.isButtonPressed(Input.Buttons.LEFT)){
 			mousePressed = true;
@@ -300,18 +301,19 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 			mousePressed = false;
 		}
 		if(mousePressed){
-			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 && mousePosition[1] < HEIGHT / 2 + 30 ){
+			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 && mousePosition[1] < HEIGHT / 2 + 30 ){			//PLAY Butonu
 				startGame();
 			}
-			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 + 30 && mousePosition[1] < HEIGHT / 2 + 60 ){
+			if(mousePosition[0] > WIDTH / 6 && mousePosition[0] < WIDTH / 6 + 220 && mousePosition[1] > HEIGHT / 2 + 30 && mousePosition[1] < HEIGHT / 2 + 60 ){	//EXIT Butonu
 				Gdx.app.exit();
 			}
 		}
 		
 	}
 	
+	//Menudeki dokunma fonksiyonu
 	private void menuTouch(){
-		
+		//TODO: TOUCH
 	}
 	
 	//Ana karakterin animasyon ve çiziminin yapýldýðý fonksiyon
@@ -351,6 +353,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		}
 	}
 	
+	//Menuden oyuna gecis
 	private void startGame(){
 		mainCharacter = new Character(characterTexture);
 		balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));
@@ -402,6 +405,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		}
 	}
 	
+	//Görev durumunun ekranda gösterimi
 	private void showQuest(){
 		font.setScale(1);
 		String progressString = "";
