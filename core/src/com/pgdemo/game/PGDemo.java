@@ -157,7 +157,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 				if(i==5)
 					break;
 			}
-			menuMouse();
+			//menuMouse();
 			menuTouch();
 		}
 		
@@ -222,13 +222,15 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 				else{
 					finish();																						//Son canýmýzý kullandýysak oyunu bitirilecek
 				}
+				break;
 			}
 			
 			if(wall != null){
-				if(balls.get(i).rect.overlaps(wall.rect)){															//Eðer toplar duvara çarptýysa
-					Ball temp = balls.get(i);
-					balls.remove(i);																				//O top ve duvar yok olacak
+				if(balls.get(i) != null & balls.get(i).rect.overlaps(wall.rect)){											//Eðer toplar duvara çarptýysa
+					Ball temp = balls.get(i);																				//O top ve duvar yok olacak
 					wall = null;
+					balls.remove(i);
+					System.out.println(balls.size());
 					
 					if(currentQuest.getType()==Quest.Type.BALL_DESTROY){
 						currentQuest.ballDestroyed();
@@ -243,6 +245,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 					score += (temp.getLevel() + 1) * 100;																//Skor topun seviyesine göre artacak
 					
 					if(temp.getLevel()>0){																				//Seviyeye göre yarýçapýn ve seviyenin yarýsý kadar 2 yeni top oluþturulacak
+						System.out.println("update - BALL CREATED");
 						balls.add(new Ball(ballTexture, temp.positionX - 10, temp.positionY, temp.getRadius()/2, temp.horizontalSpeed<0 ? (temp.horizontalSpeed * 2 / 3) : -(temp.horizontalSpeed * 2 / 3), temp.getLevel() - 1));
 						balls.add(new Ball(ballTexture, temp.positionX + 10, temp.positionY, temp.getRadius()/2, temp.horizontalSpeed>0 ? (temp.horizontalSpeed * 2 / 3) : -(temp.horizontalSpeed * 2 / 3), temp.getLevel() - 1));
 					}
@@ -314,6 +317,17 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	//Menudeki dokunma fonksiyonu
 	private void menuTouch(){
 		//TODO: TOUCH
+		for(int i=0;i<2;i++){
+			if(touches.get(i).touched){
+				if(touches.get(i).touchX > WIDTH / 6 && touches.get(i).touchX < WIDTH / 6 + 220 && touches.get(i).touchY > HEIGHT / 2 && touches.get(i).touchY < HEIGHT / 2 + 30){
+					startGame();
+				}
+				
+				if(touches.get(i).touchX > WIDTH / 6 && touches.get(i).touchX < WIDTH / 6 + 220 && touches.get(i).touchY > HEIGHT / 2 + 30 && touches.get(i).touchY < HEIGHT / 2 + 60){
+					Gdx.app.exit();
+				}
+			}
+		}
 	}
 	
 	//Ana karakterin animasyon ve çiziminin yapýldýðý fonksiyon
@@ -357,7 +371,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	private void startGame(){
 		mainCharacter = new Character(characterTexture);
 		balls.add(new Ball(ballTexture, 200, 200, 15, 50, 1));
-		currentQuest = quests.get(4);
+		currentQuest = quests.get(rand.nextInt(quests.size()));
 		gameStarted = true;
 		score=0;
 		lifes=3;
@@ -400,7 +414,8 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 	private void checkWin(){
 		System.out.println(balls.size());
 		if(balls.size()==0){
-			int l = rand.nextInt(5);
+			int l = rand.nextInt(4);
+			System.out.println("checkWin BALL CREATED");
 			balls.add(new Ball(ballTexture, rand.nextInt(WIDTH), rand.nextInt(HEIGHT / 3) + HEIGHT / 2, l * 15, rand.nextInt(150) - 75, l));
 		}
 	}
