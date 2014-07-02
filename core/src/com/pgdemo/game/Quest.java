@@ -1,7 +1,5 @@
 package com.pgdemo.game;
 
-import com.badlogic.gdx.Gdx;
-
 class Quest {
 	
 	private String info;											
