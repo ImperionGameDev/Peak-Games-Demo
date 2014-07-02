@@ -412,7 +412,7 @@ public class PGDemo extends ApplicationAdapter implements InputProcessor{
 		if(balls.size()==0){
 			int l = rand.nextInt(4);
 			System.out.println("checkWin BALL CREATED");
-			balls.add(new Ball(ballTexture, rand.nextInt(WIDTH), rand.nextInt(HEIGHT / 3) + HEIGHT / 2, l * 15, rand.nextInt(150) - 75, l));
+			balls.add(new Ball(ballTexture, rand.nextInt(WIDTH), rand.nextInt(HEIGHT / 3) + HEIGHT / 2, l * 15, rand.nextInt(50) + 25, l));
 		}
 	}
 	
